@@ -1,10 +1,18 @@
 extern crate bindgen;
+extern crate git2;
 
 use std::env;
 use std::path::PathBuf;
 use std::collections::HashMap;
 
 fn main() {
+
+    let repo = git2::Repository::open(env::current_dir().unwrap()).unwrap();
+    let mut submodules = repo.submodules().unwrap();
+
+    for submodules in &mut submodules {
+        submodules.update(true, None).unwrap();
+    }
 
     let mut board_map = HashMap::new();
     board_map.insert(
@@ -39,8 +47,8 @@ fn main() {
         .whitelist_function("_mutex_.*")
         .whitelist_var("MUTEX_.*")
         .whitelist_type("MUTEX_.*")
-        .whitelisted_var("sched_active_pid")
-        .whitelisted_var("KERNEL_PID_UNDEF")
+        .whitelist_var("sched_active_pid")
+        .whitelist_var("KERNEL_PID_UNDEF")
         .header("RIOT/core/include/thread.h")
         .header("RIOT/core/include/sched.h")
         .header("RIOT/core/include/mutex.h")
