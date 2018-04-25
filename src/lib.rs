@@ -40,7 +40,7 @@ pub mod ffi {
 
     /// @brief Tries to get a mutex, non-blocking.
     ///
-    /// @param[in] mutex Mutex object to lock. Has to be initialized first. 
+    /// @param[in] mutex Mutex object to lock. Has to be initialized first.
     /// Must not be NULL.
     ///
     /// @return 1 if mutex was unlocked, now it is locked.
@@ -51,13 +51,4 @@ pub mod ffi {
     }
 
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-}
-
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
 }

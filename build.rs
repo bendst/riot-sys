@@ -9,11 +9,11 @@ use std::path::PathBuf;
 
 #[derive(Deserialize)]
 struct AllBoards {
-    common: Vec<String>
+    common: Vec<String>,
 }
 
 #[derive(Deserialize)]
-struct BoardData{
+struct BoardData {
     model: String,
     defines: Vec<String>,
     includes: Vec<String>,
@@ -22,11 +22,9 @@ struct BoardData{
 
 fn main() {
     let mut settings = config::Config::new();
-
-
-    settings.merge(config::File::with_name("config/board")).unwrap();
-
-    //let cargo_features: CargoConfig = toml::from_str(include_str!("Cargo.toml")).unwrap();
+    settings
+        .merge(config::File::with_name("config/board"))
+        .unwrap();
 
     let features = env::vars()
         .filter_map(|(key, _value)| {
@@ -41,10 +39,13 @@ fn main() {
 
     let common = settings.get::<AllBoards>("all").expect("No common field");
 
-    assert!(features.len() == 1, "Must at least configure one board");
+    // TODO abort better
+    assert!(features.len() == 1, "Must at least configure one board.");
 
     let board_path = &format!("board.{}", features[0]);
-    let board = settings.get::<BoardData>(board_path).expect("No such board");
+    let board = settings.get::<BoardData>(board_path).expect(
+        "No such board",
+    );
 
     let mut clang_args = Vec::with_capacity(32);
     clang_args.extend(common.common);
