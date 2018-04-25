@@ -1,11 +1,56 @@
 extern crate bindgen;
 extern crate git2;
+extern crate config;
+#[macro_use]
+extern crate serde_derive;
 
 use std::env;
 use std::path::PathBuf;
-use std::collections::HashMap;
+
+#[derive(Deserialize)]
+struct AllBoards {
+    common: Vec<String>
+}
+
+#[derive(Deserialize)]
+struct BoardData{
+    model: String,
+    defines: Vec<String>,
+    includes: Vec<String>,
+}
+
 
 fn main() {
+    let mut settings = config::Config::new();
+
+
+    settings.merge(config::File::with_name("config/board")).unwrap();
+
+    //let cargo_features: CargoConfig = toml::from_str(include_str!("Cargo.toml")).unwrap();
+
+    let features = env::vars()
+        .filter_map(|(key, _value)| {
+            let feature = key.trim_left_matches("CARGO_FEATURE_");
+            if key.contains("CARGO_FEATURE_") {
+                Some(feature.to_lowercase().replace('_', "-"))
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let common = settings.get::<AllBoards>("all").expect("No common field");
+
+    assert!(features.len() == 1, "Must at least configure one board");
+
+    let board_path = &format!("board.{}", features[0]);
+    let board = settings.get::<BoardData>(board_path).expect("No such board");
+
+    let mut clang_args = Vec::with_capacity(32);
+    clang_args.extend(common.common);
+    clang_args.push(board.model);
+    clang_args.extend(board.defines);
+    clang_args.extend(board.includes);
 
     let repo = git2::Repository::open(env::current_dir().unwrap()).unwrap();
     let mut submodules = repo.submodules().unwrap();
@@ -14,31 +59,11 @@ fn main() {
         submodules.update(true, None).unwrap();
     }
 
-    let mut board_map = HashMap::new();
-    board_map.insert(
-        "sam0_common",
-        vec![
-            "-DCPU_MODEL_SAMR21G18A",
-            "-DDONT_USE_CMSIS_INIT",
-            "-IRIOT/cpu/cortexm_common/include",
-            "-IRIOT/cpu/cortexm_common/include/vendor",
-            "-IRIOT/cpu/sam0_common/include/",
-            "-IRIOT/cpu/sam0_common/include/vendor",
-            "-IRIOT/cpu/sam0_common/include/vendor/samr21/include",
-            "-IRIOT/cpu/sam0_common/include/vendor/samr21/include",
-            "-IRIOT/cpu/sam0_common/include/vendor/samrl21/include",
-            "-IRIOT/cpu/sam0_common/include/vendor/samrd21/include",
-        ],
-    );
-
-    let board = "sam0_common";
-
-
     let bindings = bindgen::builder()
         .use_core()
         .derive_copy(false)
         .ctypes_prefix("cty")
-        .clang_args(&board_map[board])
+        .clang_args(clang_args)
         .generate_comments(true)
         .whitelist_function("thread_.*")
         .whitelist_var("THREAD_.*")

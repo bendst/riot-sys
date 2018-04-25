@@ -1,0 +1,15 @@
+[all]
+common = [
+	"-DDONT_USE_CMSIS_INIT",
+	"-IRIOT/cpu/cortexm_common/include",
+	"-IRIOT/cpu/cortexm_common/include/vendor",
+]
+
+[board.samr21-xpro]
+model = "-DCPU_MODEL_SAMR21G18A"
+defines = []
+includes = [
+	"-IRIOT/cpu/sam0_common/include/",
+	"-IRIOT/cpu/sam0_common/include/vendor",
+	"-IRIOT/cpu/sam0_common/include/vendor/samr21/include",
+]
