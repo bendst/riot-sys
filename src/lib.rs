@@ -5,8 +5,11 @@
 
 extern crate cty;
 
+
 pub mod ffi {
     use cty;
+    
+    pub use cty::*;
 
     /// @brief Returns the process ID of the currently running thread
     ///
