@@ -77,11 +77,13 @@ fn main() {
         .whitelist_var("KERNEL_PID_UNDEF")
         .whitelist_function("timex_.*")
         .whitelist_function("xtimer_.*")
+        .whitelist_function("print.*")
         .header("RIOT/sys/include/timex.h")
         .header("RIOT/sys/include/xtimer.h")
         .header("RIOT/core/include/thread.h")
         .header("RIOT/core/include/sched.h")
         .header("RIOT/core/include/mutex.h")
+        .header("RIOT/sys/include/fmt.h")
         .rust_target(bindgen::RustTarget::Nightly)
         .generate()
         .expect("Failed to generate bindings");
