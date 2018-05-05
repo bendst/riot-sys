@@ -2,7 +2,7 @@
 
 {{readme}}
 
-# [Change log](CHANGELOG.md)
+# [Changelog](CHANGELOG.md)
 
 # License
 
