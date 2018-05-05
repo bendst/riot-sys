@@ -4,6 +4,8 @@ common = [
 	"-IRIOT/core/include",
 	"-IRIOT/sys/include",
 	"-IRIOT/drivers/include",
+	"-IRIOT/sys/net/gnrc/sock/include",
+	"-DSOCK_HAS_IPV6",
 ]
 
 [board.samr21-xpro]

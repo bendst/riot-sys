@@ -29,7 +29,7 @@ for which bindings should be generated.
 It will likely be the case, that after adding a new header, that some board modification must
 be extended with more preprocessor configuration within the `config/board.toml`.
 
-# [Change log](CHANGELOG.md)
+# [Changelog](CHANGELOG.md)
 
 # License
 

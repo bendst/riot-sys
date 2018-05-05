@@ -35,8 +35,8 @@ fn update_readme() {
 }
 
 fn main() {
-    println!("cargo:rerun-if-changed:src/lib.rs");
-    println!("cargo:rerun-if-changed:config/board.toml");
+    println!("cargo:rerun-if-changed=src/lib.rs");
+    println!("cargo:rerun-if-changed=config/board.toml");
     update_readme();
 
     let mut settings = config::Config::new();
@@ -84,25 +84,29 @@ fn main() {
         .ctypes_prefix("cty")
         .clang_args(clang_args)
         .generate_comments(true)
-        .whitelist_function("thread_.*")
+        .whitelist_type("MUTEX_.*")
+        .whitelist_type("sock_udp.*")
         .whitelist_var("THREAD_.*")
         .whitelist_var("STATUS_.*")
-        .whitelist_function("mutex_.*")
-        .whitelist_function("_mutex_.*")
         .whitelist_var("MUTEX_.*")
-        .whitelist_type("MUTEX_.*")
         .whitelist_var("sched_active_pid")
         .whitelist_var("KERNEL_PID_UNDEF")
+        .whitelist_function("thread_.*")
+        .whitelist_function("mutex_.*")
+        .whitelist_function("_mutex_.*")
         .whitelist_function("timex_.*")
         .whitelist_function("xtimer_.*")
         .whitelist_function("print.*")
+        .whitelist_function("sock_udp_.*")
         .header("RIOT/sys/include/timex.h")
         .header("RIOT/sys/include/xtimer.h")
         .header("RIOT/core/include/thread.h")
         .header("RIOT/core/include/sched.h")
         .header("RIOT/core/include/mutex.h")
         .header("RIOT/sys/include/fmt.h")
+        .header("RIOT/sys/include/net/sock/udp.h")
         .rust_target(bindgen::RustTarget::Nightly)
+        .rustfmt_bindings(false)
         .generate()
         .expect("Failed to generate bindings");
 
