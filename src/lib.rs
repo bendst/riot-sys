@@ -16,15 +16,15 @@
 //!
 //! ## Board
 //! To add a another board you must edit the `Cargo.toml` and the `config/board.toml`
-//! In the `Cargo.toml`, you must add the new board as an feature. The feature must match the 
+//! In the `Cargo.toml`, you must add the new board as an feature. The feature must match the
 //! board configuration in the `config/board`.
 //!
 //! If you discover more common preprocessor configuration you can add them within `[all]`.
 //!
 //! ## Functionality
-//! Modify the `whitelist_[function|var|type]` in the `build.rs` and optionally add a new header 
+//! Modify the `whitelist_[function|var|type]` in the `build.rs` and optionally add a new header
 //! for which bindings should be generated.
-//! It will likely be the case, that after adding a new header, that some board modification must 
+//! It will likely be the case, that after adding a new header, that some board modification must
 //! be extended with more preprocessor configuration within the `config/board.toml`.
 
 
@@ -38,7 +38,7 @@ extern crate cty;
 
 pub mod ffi {
     use cty;
-    
+
     pub use cty::*;
 
     /// @brief Returns the process ID of the currently running thread
@@ -81,6 +81,43 @@ pub mod ffi {
     #[inline(always)]
     pub unsafe fn mutex_trylock(mutex: *mut mutex_t) -> cty::c_int {
         _mutex_lock(mutex, 0)
+    }
+
+    pub const SOCK_IPV6_EP_ANY: _sock_tl_ep = _sock_tl_ep {
+        family: AF_INET6 as _,
+        addr: _sock_tl_ep__bindgen_ty_1 { ipv6: [0; 16] },
+        netif: SOCK_ADDR_ANY_NETIF as _,
+        port: 0,
+    };
+
+    #[inline(always)]
+    pub unsafe fn gnrc_netif_ipv6_group_join(
+        netif: *const gnrc_netif_t,
+        group: *mut ipv6_addr_t,
+    ) -> cty::c_int {
+        use core::mem;
+        gnrc_netapi_set(
+            (*netif).pid,
+            netopt_t_NETOPT_IPV6_GROUP,
+            0,
+            group as *mut _,
+            mem::size_of::<ipv6_addr_t>(),
+        )
+    }
+
+    #[inline(always)]
+    pub unsafe fn gnrc_netif_ipv6_group_leave(
+        netif: *const gnrc_netif_t,
+        group: *mut ipv6_addr_t,
+    ) -> cty::c_int {
+        use core::mem;
+        gnrc_netapi_set(
+            (*netif).pid,
+            netopt_t_NETOPT_IPV6_GROUP_LEAVE,
+            0,
+            group as *mut _,
+            mem::size_of::<ipv6_addr_t>(),
+        )
     }
 
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
