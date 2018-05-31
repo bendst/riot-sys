@@ -26,12 +26,13 @@ fn update_readme() {
     use std::io::Write;
 
     let output = Command::new("cargo").arg("readme").output().unwrap();
-    
+
     let readme = String::from_utf8_lossy(&output.stdout);
 
-    File::create("README.md").as_mut().map(|file| {
-        file.write(readme.as_bytes()).unwrap();
-    }).unwrap();
+    File::create("README.md")
+        .as_mut()
+        .map(|file| { file.write(readme.as_bytes()).expect("failed to write to README.md"); })
+        .expect("failed to create README.md");
 }
 
 fn main() {
@@ -42,7 +43,7 @@ fn main() {
     let mut settings = config::Config::new();
     settings
         .merge(config::File::with_name("config/board"))
-        .unwrap();
+        .expect("unable to merge with config file.");
 
     let features = env::vars()
         .filter_map(|(key, _value)| {
@@ -75,7 +76,9 @@ fn main() {
     let mut submodules = repo.submodules().unwrap();
 
     for submodules in &mut submodules {
-        submodules.update(true, None).unwrap();
+        submodules.update(true, None).expect(
+            "Failed to update submodules",
+        );
     }
 
     let bindings = bindgen::builder()
@@ -124,7 +127,9 @@ fn main() {
         .generate()
         .expect("Failed to generate bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let out_path = PathBuf::from(env::var("OUT_DIR").expect(
+        "failed to create output directory path",
+    ));
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Could not write bindings");
