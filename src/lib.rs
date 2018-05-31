@@ -5,7 +5,7 @@
 //! # Supported bindings
 //! - [x] threads
 //! - [x] mutex
-//! - [ ] network
+//! - [x] network
 //! - [x] time
 //! - [x] formatted output
 //!
