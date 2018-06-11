@@ -6,7 +6,6 @@ common = [
 	"-IRIOT/drivers/include",
 	"-IRIOT/sys/net/gnrc/sock/include",
 	"-DSOCK_HAS_IPV6",
-	"--std=c11",
 ]
 
 [board.samr21-xpro]

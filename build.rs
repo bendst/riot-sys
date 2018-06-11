@@ -35,6 +35,15 @@ fn update_readme() {
         .expect("failed to create README.md");
 }
 
+fn clang_version() -> String {
+    use std::process::Command;
+
+    let mut cmd = Command::new("clang");
+    cmd.arg("--version");
+
+    String::from_utf8(cmd.output().unwrap().stdout).unwrap()
+}
+
 fn main() {
     println!("cargo:rerun-if-changed=src/lib.rs");
     println!("cargo:rerun-if-changed=config/board.toml");
@@ -67,6 +76,10 @@ fn main() {
     );
 
     let mut clang_args = Vec::with_capacity(32);
+    match clang_version().as_str() {
+        v if v.contains("6.") => (),
+        _ => clang_args.push("--std=c11".to_owned()),
+    }
     clang_args.extend(common.common);
     clang_args.push(board.model);
     clang_args.extend(board.defines);
