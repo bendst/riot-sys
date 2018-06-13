@@ -40,8 +40,11 @@ fn clang_version() -> String {
 
     let mut cmd = Command::new("clang");
     cmd.arg("--version");
-
-    String::from_utf8(cmd.output().unwrap().stdout).unwrap()
+    let output = match cmd.output() {
+        Ok(output) => output,
+        Err(_) => return String::new(),
+    };
+    String::from_utf8(output.stdout).unwrap_or_else(|_| String::new())
 }
 
 fn main() {
@@ -85,8 +88,8 @@ fn main() {
     clang_args.extend(board.defines);
     clang_args.extend(board.includes);
 
-    let repo = git2::Repository::open(env::current_dir().unwrap()).unwrap();
-    let mut submodules = repo.submodules().unwrap();
+    let repo = git2::Repository::open(env::current_dir().expect("Could not retrieve current directory.")).expect("Failed to open current directory.");
+    let mut submodules = repo.submodules().expect("No submodules.");
 
     for submodules in &mut submodules {
         submodules.update(true, None).expect(
