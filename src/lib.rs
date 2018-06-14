@@ -41,6 +41,19 @@ pub mod ffi {
 
     pub use cty::*;
 
+    #[inline(always)]
+    pub unsafe fn ethernet_get_iid(eui64: *mut eui64_t, mac: *const u8) {
+        let mut eui64 = *eui64;
+        eui64.uint8[0] = *mac.offset(0) ^ 0x02;
+        eui64.uint8[1] = *mac.offset(1);
+        eui64.uint8[2] = *mac.offset(2);
+        eui64.uint8[3] = 0xff;
+        eui64.uint8[4] = 0xfe;
+        eui64.uint8[5] = *mac.offset(3);
+        eui64.uint8[6] = *mac.offset(4);
+        eui64.uint8[7] = *mac.offset(5);
+    }
+
     /// @brief Returns the process ID of the currently running thread
     ///
     /// @return          obviously you are not a golfer.
