@@ -1,6 +1,6 @@
 extern crate bindgen;
-extern crate git2;
 extern crate config;
+extern crate git2;
 #[macro_use]
 extern crate serde_derive;
 
@@ -19,11 +19,10 @@ struct BoardData {
     includes: Vec<String>,
 }
 
-
 fn update_readme() {
-    use std::process::Command;
     use std::fs::File;
     use std::io::Write;
+    use std::process::Command;
 
     let output = Command::new("cargo").arg("readme").output().unwrap();
 
@@ -31,7 +30,10 @@ fn update_readme() {
 
     File::create("README.md")
         .as_mut()
-        .map(|file| { file.write(readme.as_bytes()).expect("failed to write to README.md"); })
+        .map(|file| {
+            file.write(readme.as_bytes())
+                .expect("failed to write to README.md");
+        })
         .expect("failed to create README.md");
 }
 
@@ -74,9 +76,9 @@ fn main() {
     assert!(features.len() == 1, "Must at least configure one board.");
 
     let board_path = &format!("board.{}", features[0]);
-    let board = settings.get::<BoardData>(board_path).expect(
-        "No such board",
-    );
+    let board = settings
+        .get::<BoardData>(board_path)
+        .expect("No such board");
 
     let mut clang_args = Vec::with_capacity(32);
     match clang_version().as_str() {
@@ -88,13 +90,15 @@ fn main() {
     clang_args.extend(board.defines);
     clang_args.extend(board.includes);
 
-    let repo = git2::Repository::open(env::current_dir().expect("Could not retrieve current directory.")).expect("Failed to open current directory.");
+    let repo = git2::Repository::open(
+        env::current_dir().expect("Could not retrieve current directory."),
+    ).expect("Failed to open current directory.");
     let mut submodules = repo.submodules().expect("No submodules.");
 
     for submodules in &mut submodules {
-        submodules.update(true, None).expect(
-            "Failed to update submodules",
-        );
+        submodules
+            .update(true, None)
+            .expect("Failed to update submodules");
     }
 
     let bindings = bindgen::builder()
@@ -111,6 +115,7 @@ fn main() {
         .whitelist_type("gnrc_netif_t")
         .whitelist_type("eui64_t")
         .whitelist_type("netopt_t")
+        .whitelist_var("E.*")
         .whitelist_var("AF_.*")
         .whitelist_var("THREAD_.*")
         .whitelist_var("STATUS_.*")
@@ -128,6 +133,7 @@ fn main() {
         .whitelist_function("gnrc_netapi_set")
         .whitelist_function("gnrc_netif_iter")
         .whitelist_function("netdev_eth_get")
+        .header("RIOT/cpu/atmega_common/avr-libc-extra/errno.h")
         .header("RIOT/sys/include/timex.h")
         .header("RIOT/sys/include/xtimer.h")
         .header("RIOT/core/include/thread.h")
@@ -148,9 +154,8 @@ fn main() {
         .generate()
         .expect("Failed to generate bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").expect(
-        "failed to create output directory path",
-    ));
+    let out_path =
+        PathBuf::from(env::var("OUT_DIR").expect("failed to create output directory path"));
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Could not write bindings");
