@@ -100,6 +100,13 @@ fn main() {
             .update(true, None)
             .expect("Failed to update submodules");
     }
+    let errno_path = env::var("CARGO_CFG_TARGET_ARCH")
+        .map(|arch| match arch.as_str() {
+            "arm" => "/usr/arm-none-eabi/include/errno.h".to_owned(),
+            _ => "/usr/include/errno.h".to_owned(),
+        })
+        .or_else(|_| env::var("SDDS_ERRNO_PATH"))
+        .expect("Failed to determine errno header");
 
     let bindings = bindgen::builder()
         .use_core()
@@ -133,7 +140,8 @@ fn main() {
         .whitelist_function("gnrc_netapi_set")
         .whitelist_function("gnrc_netif_iter")
         .whitelist_function("netdev_eth_get")
-        .header("RIOT/cpu/atmega_common/avr-libc-extra/errno.h")
+        //.header("RIOT/cpu/atmega_common/avr-libc-extra/errno.h")
+        .header(errno_path)
         .header("RIOT/sys/include/timex.h")
         .header("RIOT/sys/include/xtimer.h")
         .header("RIOT/core/include/thread.h")
