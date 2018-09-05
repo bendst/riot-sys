@@ -5,7 +5,7 @@ extern crate git2;
 extern crate serde_derive;
 
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Deserialize)]
 struct AllBoards {
@@ -33,8 +33,18 @@ fn update_readme() {
         .map(|file| {
             file.write(readme.as_bytes())
                 .expect("failed to write to README.md");
-        })
-        .expect("failed to create README.md");
+        }).expect("failed to create README.md");
+}
+
+fn header_exists<A: AsRef<Path>>(path: A) -> Option<PathBuf> {
+    use std::fs;
+    fs::metadata(&path).ok().and_then(|meta| {
+        if meta.is_file() {
+            Some(path.as_ref().into())
+        } else {
+            None
+        }
+    })
 }
 
 fn clang_version() -> String {
@@ -67,8 +77,7 @@ fn main() {
             } else {
                 None
             }
-        })
-        .collect::<Vec<_>>();
+        }).collect::<Vec<_>>();
 
     let common = settings.get::<AllBoards>("all").expect("No common field");
 
@@ -90,9 +99,9 @@ fn main() {
     clang_args.extend(board.defines);
     clang_args.extend(board.includes);
 
-    let repo = git2::Repository::open(
-        env::current_dir().expect("Could not retrieve current directory."),
-    ).expect("Failed to open current directory.");
+    let repo =
+        git2::Repository::open(env::current_dir().expect("Could not retrieve current directory."))
+            .expect("Failed to open current directory.");
     let mut submodules = repo.submodules().expect("No submodules.");
 
     for submodules in &mut submodules {
@@ -102,10 +111,16 @@ fn main() {
     }
     let errno_path = env::var("CARGO_CFG_TARGET_ARCH")
         .map(|arch| match arch.as_str() {
-            "arm" => "/usr/arm-none-eabi/include/errno.h".to_owned(),
-            _ => "/usr/include/errno.h".to_owned(),
-        })
-        .or_else(|_| env::var("SDDS_ERRNO_PATH"))
+            "arm" => {
+                let path = "/usr/arm-none-eabi/include/errno.h";
+                header_exists(path)
+                    .or_else(|| env::var("SDDS_ERRNO_PATH").ok().map(From::from))
+                    .expect(
+                        "No errno header found. You can set it manually by using SDDS_ERRNO_PATH",
+                    )
+            }
+            _ => PathBuf::from("/usr/include/errno.h"),
+        }).or_else(|_| env::var("SDDS_ERRNO_PATH").map(From::from))
         .expect("Failed to determine errno header");
 
     let bindings = bindgen::builder()
@@ -141,7 +156,7 @@ fn main() {
         .whitelist_function("gnrc_netif_iter")
         .whitelist_function("netdev_eth_get")
         //.header("RIOT/cpu/atmega_common/avr-libc-extra/errno.h")
-        .header(errno_path)
+        .header(errno_path.to_str().expect("Invalid str"))
         .header("RIOT/sys/include/timex.h")
         .header("RIOT/sys/include/xtimer.h")
         .header("RIOT/core/include/thread.h")
