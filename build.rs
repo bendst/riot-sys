@@ -92,6 +92,7 @@ fn main() {
     let mut clang_args = Vec::with_capacity(32);
     match clang_version().as_str() {
         v if v.contains("6.") => (),
+        v if v.contains("7.") => (),
         _ => clang_args.push("--std=c11".to_owned()),
     }
     clang_args.extend(common.common);
@@ -155,7 +156,6 @@ fn main() {
         .whitelist_function("gnrc_netapi_set")
         .whitelist_function("gnrc_netif_iter")
         .whitelist_function("netdev_eth_get")
-        //.header("RIOT/cpu/atmega_common/avr-libc-extra/errno.h")
         .header(errno_path.to_str().expect("Invalid str"))
         .header("RIOT/sys/include/timex.h")
         .header("RIOT/sys/include/xtimer.h")
