@@ -33,7 +33,8 @@ fn update_readme() {
         .map(|file| {
             file.write(readme.as_bytes())
                 .expect("failed to write to README.md");
-        }).expect("failed to create README.md");
+        })
+        .expect("failed to create README.md");
 }
 
 fn header_exists<A: AsRef<Path>>(path: A) -> Option<PathBuf> {
@@ -77,7 +78,8 @@ fn main() {
             } else {
                 None
             }
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
 
     let common = settings.get::<AllBoards>("all").expect("No common field");
 
@@ -95,10 +97,23 @@ fn main() {
         v if v.contains("7.") => (),
         _ => clang_args.push("--std=c11".to_owned()),
     }
+
+    let target = env!("TARGET");
+    let base_dir = format!("/usr/{}", target);
+    let errno_path = "/usr/include/errno.h";
+
+    // Debian wonkyness
+    let debian_base_dir = format!("/usr/lib/{}", target);
+    let debian_errno_path = format!("{}/include", debian_base_dir);
+
+    let extra_includes = [format!("-I{}", base_dir), format!("-I{}", debian_base_dir)];
+
     clang_args.extend(common.common);
     clang_args.push(board.model);
     clang_args.extend(board.defines);
     clang_args.extend(board.includes);
+    clang_args.push("-I/usr/include/newlib".to_string());
+    //clang_args.extend(extra_includes.iter().cloned());
 
     let repo =
         git2::Repository::open(env::current_dir().expect("Could not retrieve current directory."))
@@ -110,19 +125,13 @@ fn main() {
             .update(true, None)
             .expect("Failed to update submodules");
     }
-    let errno_path = env::var("CARGO_CFG_TARGET_ARCH")
-        .map(|arch| match arch.as_str() {
-            "arm" => {
-                let path = "/usr/arm-none-eabi/include/errno.h";
-                header_exists(path)
-                    .or_else(|| env::var("SDDS_ERRNO_PATH").ok().map(From::from))
-                    .expect(
-                        "No errno header found. You can set it manually by using SDDS_ERRNO_PATH",
-                    )
-            }
-            _ => PathBuf::from("/usr/include/errno.h"),
-        }).or_else(|_| env::var("SDDS_ERRNO_PATH").map(From::from))
-        .expect("Failed to determine errno header");
+
+    /*
+    let errno_path = header_exists(errno_path)
+        .or_else(|| header_exists(debian_errno_path))
+        .or_else(|| env::var("SDDS_ERRNO_PATH").ok().map(From::from))
+        .expect("No errno header found. You can set it manually by using SDDS_ERRNO_PATH");
+    */
 
     let bindings = bindgen::builder()
         .use_core()
@@ -156,7 +165,7 @@ fn main() {
         .whitelist_function("gnrc_netapi_set")
         .whitelist_function("gnrc_netif_iter")
         .whitelist_function("netdev_eth_get")
-        .header(errno_path.to_str().expect("Invalid str"))
+        //.header(errno_path)
         .header("RIOT/sys/include/timex.h")
         .header("RIOT/sys/include/xtimer.h")
         .header("RIOT/core/include/thread.h")
