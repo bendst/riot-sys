@@ -98,7 +98,7 @@ fn main() {
         _ => clang_args.push("--std=c11".to_owned()),
     }
 
-    let target = env!("TARGET");
+    let target = std::env::var("TARGET").unwrap();
     let base_dir = format!("/usr/{}", target);
     let errno_path = "/usr/include/errno.h";
 
